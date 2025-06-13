@@ -1,37 +1,29 @@
-const puppeteer = require("puppeteer");
-const fs = require("fs");
-const path = require("path");
+const axios = require('axios');
+const cheerio = require('cheerio');
+const fs = require('fs');
+const path = require('path');
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
-
-  const page = await browser.newPage();
-
-  const EDICION_ACTUAL = 1415; // Cambiar esto por una lógica dinámica si querés
-  const url = `https://www.diarioepoca.com/edicion/${EDICION_ACTUAL}/`;
-
   try {
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 0 });
+    const { data } = await axios.get('https://www.diariolaepoca.com/');
+    const $ = cheerio.load(data);
 
-    const imageUrl = await page.evaluate(() => {
-      const img = document.querySelector("source[srcset*='bucket']");
-      return img ? img.srcset : null;
-    });
+    // Ajustá este selector según el sitio. Ejemplo:
+    const imgUrl = $('img[src*="tapa"]').attr('src');
 
-    if (imageUrl) {
-      const viewSource = await page.goto(imageUrl);
-      const buffer = await viewSource.buffer();
-      fs.writeFileSync(path.join(__dirname, "tapa_epoca.webp"), buffer);
-      console.log("✅ Imagen descargada con éxito:", imageUrl);
-    } else {
-      console.log("❌ No se encontró imagen en la página.");
+    if (!imgUrl) {
+      console.error('❌ No se encontró imagen en la página.');
+      process.exit(1);
     }
-  } catch (err) {
-    console.error("⚠️ Error al intentar descargar la imagen:", err);
-  }
 
-  await browser.close();
+    const fullUrl = imgUrl.startsWith('http') ? imgUrl : `https://www.diariolaepoca.com${imgUrl}`;
+    const response = await axios.get(fullUrl, { responseType: 'arraybuffer' });
+
+    const filePath = path.resolve(__dirname, 'tapa_epoca.webp');
+    fs.writeFileSync(filePath, response.data);
+    console.log(`✅ Imagen descargada correctamente: ${filePath}`);
+  } catch (error) {
+    console.error('❌ Error al descargar la imagen:', error.message);
+    process.exit(1);
+  }
 })();
