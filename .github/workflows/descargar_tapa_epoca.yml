@@ -2,12 +2,13 @@ name: Descargar tapa de diario Época
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Todos los días a las 06:00 UTC
+    - cron: '0 6 * * *'  # Todos los días a las 06:00 UTC
   workflow_dispatch:
 
 jobs:
   descargar-tapa:
     runs-on: ubuntu-latest
+
     steps:
       - name: Clonar el repositorio
         uses: actions/checkout@v4
@@ -15,12 +16,14 @@ jobs:
       - name: Instalar Puppeteer y dependencias
         run: |
           sudo apt update
-          sudo apt install -y wget curl gnupg ca-certificates fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libcups2 libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 xdg-utils
+          sudo apt install -y wget curl gnupg ca-certificates fonts-liberation \
+            libappindicator3-1 libasound2t64 libatk-bridge2.0-0 libatk1.0-0 \
+            libcups2 libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 libx11-xcb1 \
+            libxcomposite1 libxdamage1 libxrandr2 xdg-utils
           npm install puppeteer
 
       - name: Ejecutar script para descargar la imagen
-        run: |
-          node descargar_tapa.js
+        run: node descargar_tapa.js
 
       - name: Subir imagen a GitHub
         uses: actions/upload-artifact@v4
